@@ -13,7 +13,9 @@ public class AuthResponse {
     private String refreshToken;
     private String message;
 
-
     private Boolean requiresOtp;
     private String email;
+
+    private String sessionId;
+    private Long expiresIn;
 }

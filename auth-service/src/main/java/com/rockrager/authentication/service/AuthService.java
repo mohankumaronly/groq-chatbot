@@ -107,7 +107,9 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
+        log.info("Login attempt for: {}", request.getEmail());
 
+        // Validate credentials
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
@@ -119,22 +121,10 @@ public class AuthService {
             throw new RuntimeException("Please verify your email first. Check your inbox for verification link.");
         }
 
-        boolean hasLoggedInBefore = user.getLoginCount() > 0;
+        boolean isFirstLogin = user.getLoginCount() == 0;
 
-        log.info("User login attempt for: {}, Login count: {}, hasLoggedInBefore: {}",
-                user.getEmail(), user.getLoginCount(), hasLoggedInBefore);
-
-        if (hasLoggedInBefore) {
-            log.info("Existing user - returning requiresOtp: true for: {}", user.getEmail());
-
-            String maskedEmail = maskEmail(user.getEmail());
-
-            return AuthResponse.builder()
-                    .requiresOtp(true)
-                    .message("Please verify your identity")
-                    .email(maskedEmail)
-                    .build();
-        } else {
+        // FIRST LOGIN: Direct access without OTP
+        if (isFirstLogin) {
             log.info("First time login for user: {}", user.getEmail());
 
             String accessToken = jwtService.generateAccessToken(user.getEmail());
@@ -160,9 +150,37 @@ public class AuthService {
             return AuthResponse.builder()
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
+                    .requiresOtp(false)
                     .message("Login successful")
                     .build();
         }
+
+        // SUBSEQUENT LOGINS: Require OTP verification
+        log.info("Existing user - requires OTP for: {}", user.getEmail());
+
+        // Clear any existing unused OTPs
+        otpCodeRepository.deleteByUserAndUsedFalse(user);
+
+        // Generate session ID and send OTP
+        String sessionId = UUID.randomUUID().toString();
+        String otpCode = otpService.generateAndSendOtp(
+                user,
+                sessionId,
+                request.getDeviceInfo(),
+                request.getIpAddress()
+        );
+
+        log.info("OTP sent to user: {} for session: {}", user.getEmail(), sessionId);
+
+        String maskedEmail = maskEmail(user.getEmail());
+
+        return AuthResponse.builder()
+                .requiresOtp(true)
+                .sessionId(sessionId)
+                .message("OTP sent to your email. Please verify to continue.")
+                .email(maskedEmail)
+                .expiresIn((long) otpService.getOtpExpirySeconds())
+                .build();
     }
 
     @Transactional
@@ -314,84 +332,6 @@ public class AuthService {
         log.info("Password reset successful for user: {}", user.getEmail());
 
         return "Password reset successful. Please login with your new password.";
-    }
-
-    @Transactional
-    public LoginInitiateResponse initiateLogin(LoginRequest request) {
-        log.info("INITIATE LOGIN - START");
-
-        String originalEmail = request.getEmail();
-        log.info("Original email for lookup: {}", originalEmail);
-
-        log.info("Request password length: {}", request.getPassword() != null ? request.getPassword().length() : 0);
-        log.info("Request device info: {}", request.getDeviceInfo());
-        log.info("Request IP address: {}", request.getIpAddress());
-
-        log.info("Searching for user with email: {}", originalEmail);
-        User user = userRepository.findByEmail(originalEmail)
-                .orElseThrow(() -> {
-                    log.error("User not found with email: {}", originalEmail);
-                    return new RuntimeException("Invalid email or password");
-                });
-
-        log.info("User found - ID: {}, Email: {}, Login Count: {}, Auth Provider: {}",
-                user.getId(), user.getEmail(), user.getLoginCount(), user.getAuthProvider());
-
-        if (user.getAuthProvider() == AuthProvider.GOOGLE && (user.getPassword() == null || user.getPassword().isEmpty())) {
-            log.warn("User {} is Google-only account with no password", user.getEmail());
-            throw new RuntimeException("This account uses Google login. Please sign in with Google.");
-        }
-
-        if (user.getGoogleId() != null && user.getAuthProvider() == AuthProvider.LOCAL) {
-            log.info("User with linked Google account logging in with password: {}", request.getEmail());
-        }
-
-        log.info("Validating password...");
-        boolean passwordMatches = passwordEncoder.matches(request.getPassword(), user.getPassword());
-        log.info("Password matches: {}", passwordMatches);
-
-        if (!passwordMatches) {
-            log.error("Password mismatch for user: {}", originalEmail);
-            throw new RuntimeException("Invalid email or password");
-        }
-        log.info("Password validated successfully");
-
-        log.info("Checking email verification status...");
-        if (!user.isEmailVerified()) {
-            log.warn("User {} has not verified email", user.getEmail());
-            throw new RuntimeException("Please verify your email first. Check your inbox for verification link.");
-        }
-        log.info("Email is verified");
-
-        otpCodeRepository.deleteByUserAndUsedFalse(user);
-        log.info("Cleared any existing unused OTPs for user: {}", user.getEmail());
-
-        String sessionId = UUID.randomUUID().toString();
-        log.info("Generated session ID: {}", sessionId);
-
-        log.info("Generating and sending OTP...");
-        String otpCode = otpService.generateAndSendOtp(
-                user,
-                sessionId,
-                request.getDeviceInfo(),
-                request.getIpAddress()
-        );
-        log.info("OTP generated and sent - Code: {}", otpCode);
-
-        log.info("OTP sent to user: {} for session: {}", user.getEmail(), sessionId);
-
-        String maskedEmail = maskEmail(user.getEmail());
-        log.info("Masked email for response: {}", maskedEmail);
-
-        log.info("INITIATE LOGIN - SUCCESS");
-
-        return LoginInitiateResponse.builder()
-                .sessionId(sessionId)
-                .otpRequired(true)
-                .message("OTP sent to your email address")
-                .otpSentTo(maskedEmail)
-                .expiresIn((long) otpService.getOtpExpirySeconds())
-                .build();
     }
 
     @Transactional

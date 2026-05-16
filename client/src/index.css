@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Variables for Theme Support */
+:root {
+  /* Dark theme (default) */
+  --bg-primary: #343541;
+  --bg-sidebar: #202123;
+  --bg-surface: #444654;
+  --bg-surface-hover: #4a4b52;
+  --text-primary: #ececf1;
+  --text-secondary: #c5c5d2;
+  --text-muted: #8e8ea0;
+  --border-color: #4a4b52;
+  --color-primary: #10a37f;
+  --color-primary-hover: #0e8f6f;
+  --color-success: #10a37f;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+}
+
+/* Light theme */
+:root.light {
+  --bg-primary: #ffffff;
+  --bg-sidebar: #f7f7f8;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f7f7f8;
+  --text-primary: #343541;
+  --text-secondary: #6e6e80;
+  --text-muted: #acacbe;
+  --border-color: #e5e5e5;
+  --color-primary: #10a37f;
+  --color-primary-hover: #0e8f6f;
+}
+
+/* Apply theme variables */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Component styles with theme variables */
+@layer components {
+  .auth-container {
+    @apply min-h-screen flex items-center justify-center px-4;
+    background-color: var(--bg-primary);
+  }
+  
+  .auth-card {
+    background-color: #2a2b32;
+    @apply rounded-2xl shadow-xl p-8 w-full max-w-md;
+  }
+  
+  .light .auth-card {
+    background-color: #ffffff;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  }
+  
+  .auth-input {
+    background-color: #3a3b42;
+    border-color: #4a4b52;
+    @apply w-full px-4 py-3 rounded-lg text-chatgpt-text 
+           placeholder-gray-400 focus:outline-none 
+           focus:border-chatgpt-green transition-colors;
+  }
+  
+  .light .auth-input {
+    background-color: #ffffff;
+    border-color: #e5e5e5;
+    color: #343541;
+  }
+  
+  .auth-button {
+    @apply w-full bg-chatgpt-green hover:bg-[#0e8f6f] text-white font-semibold 
+           py-3 px-4 rounded-lg transition-colors disabled:opacity-50 
+           disabled:cursor-not-allowed;
+  }
+}

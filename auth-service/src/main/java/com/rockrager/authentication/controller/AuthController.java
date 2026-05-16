@@ -2,7 +2,6 @@ package com.rockrager.authentication.controller;
 
 import com.rockrager.authentication.dto.request.*;
 import com.rockrager.authentication.dto.response.AuthResponse;
-import com.rockrager.authentication.dto.response.LoginInitiateResponse;
 import com.rockrager.authentication.repository.UserRepository;
 import com.rockrager.authentication.service.AuthService;
 
@@ -49,29 +48,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest,
             HttpServletResponse response
     ) {
-        AuthResponse authResponse = authService.login(request);
-
-        Cookie refreshTokenCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(cookieSecure);
-        refreshTokenCookie.setPath("/api/auth");
-        refreshTokenCookie.setMaxAge(refreshTokenMaxAge);
-        refreshTokenCookie.setAttribute("SameSite", cookieSameSite);
-        response.addCookie(refreshTokenCookie);
-
-        authResponse.setRefreshToken(null);
-
-        return ResponseEntity.ok(authResponse);
-    }
-
-    @PostMapping("/login/initiate")
-    public ResponseEntity<LoginInitiateResponse> initiateLogin(
-            @Valid @RequestBody LoginRequest request,
-            HttpServletRequest httpRequest
-    ) {
-
+        // Extract device info and IP from request if not provided
         String userAgent = httpRequest.getHeader("User-Agent");
         String clientIp = getClientIpAddress(httpRequest);
 
@@ -85,16 +65,63 @@ public class AuthController {
             request.setUserAgent(userAgent);
         }
 
-        LoginInitiateResponse response = authService.initiateLogin(request);
-        return ResponseEntity.ok(response);
+        AuthResponse authResponse = authService.login(request);
+
+        // Case 1: Successful login with tokens (first login)
+        if (authResponse.getAccessToken() != null && authResponse.getRefreshToken() != null) {
+            // Set refresh token as HTTP-only cookie
+            Cookie refreshTokenCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
+            refreshTokenCookie.setHttpOnly(true);
+            refreshTokenCookie.setSecure(cookieSecure);
+            refreshTokenCookie.setPath("/api/auth");
+            refreshTokenCookie.setMaxAge(refreshTokenMaxAge);
+            refreshTokenCookie.setAttribute("SameSite", cookieSameSite);
+            response.addCookie(refreshTokenCookie);
+
+            // Don't send refresh token in response body
+            authResponse.setRefreshToken(null);
+        }
+        // Case 2: OTP required (subsequent login)
+        else if (authResponse.getRequiresOtp() != null && authResponse.getRequiresOtp()) {
+            // Set session ID as HTTP-only cookie for OTP flow
+            if (authResponse.getSessionId() != null) {
+                Cookie sessionCookie = new Cookie("loginSessionId", authResponse.getSessionId());
+                sessionCookie.setHttpOnly(true);
+                sessionCookie.setSecure(cookieSecure);
+                sessionCookie.setPath("/api/auth");
+                sessionCookie.setMaxAge(300); // 5 minutes (matches OTP expiry)
+                sessionCookie.setAttribute("SameSite", cookieSameSite);
+                response.addCookie(sessionCookie);
+            }
+
+            // DO NOT set sessionId to null - keep it in response for mobile/API clients
+            // authResponse.setSessionId(null); // REMOVE THIS LINE
+        }
+
+        return ResponseEntity.ok(authResponse);
     }
 
-    // NEW ENDPOINT - Verify OTP and Complete Login (Step 2)
+
     @PostMapping("/login/verify")
     public ResponseEntity<AuthResponse> verifyOtpAndLogin(
             @Valid @RequestBody OtpVerificationRequest request,
+            HttpServletRequest httpRequest,  // Add this
             HttpServletResponse response
     ) {
+        // If sessionId not in request body, try to get from cookie (for web browsers)
+        if (request.getSessionId() == null || request.getSessionId().isEmpty()) {
+            Cookie[] cookies = httpRequest.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("loginSessionId".equals(cookie.getName())) {
+                        request.setSessionId(cookie.getValue());
+                        log.info("Retrieved sessionId from cookie: {}", request.getSessionId());
+                        break;
+                    }
+                }
+            }
+        }
+
         AuthResponse authResponse = authService.verifyOtpAndLogin(request);
 
         if (authResponse.getRefreshToken() != null) {
@@ -105,6 +132,14 @@ public class AuthController {
             refreshTokenCookie.setMaxAge(refreshTokenMaxAge);
             refreshTokenCookie.setAttribute("SameSite", cookieSameSite);
             response.addCookie(refreshTokenCookie);
+
+            // Clear the login session cookie if it exists
+            Cookie sessionCookie = new Cookie("loginSessionId", null);
+            sessionCookie.setHttpOnly(true);
+            sessionCookie.setSecure(cookieSecure);
+            sessionCookie.setPath("/api/auth");
+            sessionCookie.setMaxAge(0);
+            response.addCookie(sessionCookie);
         }
 
         authResponse.setRefreshToken(null);
@@ -267,6 +302,4 @@ public class AuthController {
                 )
         ));
     }
-
-
 }

@@ -38,7 +38,7 @@ public class SecurityConfig {
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final OAuth2UserService oAuth2UserService;
 
-    @Value("${cors.allowed.origins:http://localhost:3000,http://localhost:8080,http://localhost:8081,https://prompt2page.onrender.com,https://prompt2page-frontend.vercel.app}")
+    @Value("${cors.allowed.origins:http://localhost:3000,http://localhost:8080,http://localhost:8081,https://prompt2page.onrender.com,https://prompt2page-frontend.vercel.app,http://localhost:5173}")
     private String allowedOrigins;
 
     @Bean
@@ -52,6 +52,7 @@ public class SecurityConfig {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new RestAuthenticationEntryPoint())
                 )
+                // Add this line to disable security for OPTIONS requests
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/register",
@@ -71,6 +72,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/v3/api-docs"
                         ).permitAll()
+                        // Add this line to allow all OPTIONS requests
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -102,7 +105,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         List<String> origins = Arrays.asList(allowedOrigins.split(","));
         configuration.setAllowedOrigins(origins);
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie"));

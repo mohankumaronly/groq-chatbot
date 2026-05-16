@@ -32,12 +32,20 @@ public class EmailService {
     @Value("${app.base-url}")
     private String baseUrl;
 
+    // ADD THIS - Read FRONTEND_URL from .env
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
+
     @Async
     public void sendVerificationEmail(String to, String userName, String token) {
         log.info("Sending verification email to: {}", to);
 
         try {
-            String verificationLink = baseUrl + "/api/auth/verify-email?token=" + token;
+            // CHANGE THIS LINE - Use frontendUrl
+            String verificationLink = frontendUrl + "/verify-email?token=" + token;
+            // OLD: String verificationLink = baseUrl + "/api/auth/verify-email?token=" + token;
+
             String subject = "Verify Your Email - RockRager Authentication";
 
             if (htmlEmailEnabled) {
@@ -60,7 +68,10 @@ public class EmailService {
         log.info("Sending password reset email to: {}", to);
 
         try {
-            String resetLink = baseUrl + "/api/auth/reset-password?token=" + token;
+            // CHANGE THIS LINE - Use frontendUrl
+            String resetLink = frontendUrl + "/reset-password?token=" + token;
+            // OLD: String resetLink = baseUrl + "/api/auth/reset-password?token=" + token;
+
             String subject = "Reset Your Password - RockRager Authentication";
 
             if (htmlEmailEnabled) {
