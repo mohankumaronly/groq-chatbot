@@ -29,6 +29,17 @@ server:
 jwt:
   secret: ${JWT_SECRET:my_super_secret_key_for_jwt_authentication_system_2026}
 
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 30000
+        readTimeout: 60000
+        loggerLevel: basic
+
 logging:
   level:
     com.ranger.aichat: DEBUG
+    com.ranger.aichat.client: DEBUG
+    com.ranger.aichat.service: DEBUG
+    feign: DEBUG

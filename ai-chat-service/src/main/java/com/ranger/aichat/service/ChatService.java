@@ -9,6 +9,7 @@ import com.ranger.aichat.exception.ConversationNotFoundException;
 import com.ranger.aichat.exception.GroqApiException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,9 @@ public class ChatService {
     private final ConversationService conversationService;
     private final MessageService messageService;
     private final GroqService groqService;
+
+    @Value("${groq.api.model:llama-3.1-8b-instant}")
+    private String model;
 
     public ChatResponse sendMessage(SendMessageRequest request) {
         Long conversationId = request.getConversationId();
@@ -50,7 +54,7 @@ public class ChatService {
                     .conversationId(conversationId)
                     .assistantResponse(aiResponse)
                     .timestamp(LocalDateTime.now())
-                    .model("llama3-8b-8192")
+                    .model(model)  // Use the injected model name
                     .build();
 
         } catch (ConversationNotFoundException e) {
@@ -123,7 +127,7 @@ public class ChatService {
                 .conversationId(conversationId)
                 .assistantResponse(newAiResponse)
                 .timestamp(LocalDateTime.now())
-                .model("llama3-8b-8192")
+                .model(model)
                 .build();
     }
 

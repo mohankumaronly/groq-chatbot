@@ -84,14 +84,14 @@ export const ChatInterface = ({ conversationId }: ChatInterfaceProps) => {
   }
 
   return (
-    <div className="flex h-full flex-col bg-chatgpt-dark">
+    <div className="flex h-full flex-col bg-chatgpt-dark overflow-hidden w-full">
       {/* Header */}
-      <div className="border-b border-gray-700 bg-chatgpt-sidebar p-4">
+      <div className="border-b border-gray-700 bg-chatgpt-sidebar p-3 sm:p-4">
         <div className="mx-auto max-w-4xl">
-          <h1 className="text-xl font-semibold text-chatgpt-text">
+          <h1 className="text-lg sm:text-xl font-semibold text-chatgpt-text break-words">
             {currentConversation?.title || 'New Chat'}
           </h1>
-          <p className="text-sm text-gray-400">
+          <p className="text-xs sm:text-sm text-gray-400">
             Chat with AI • {safeMessages.length} messages
           </p>
         </div>
@@ -99,15 +99,15 @@ export const ChatInterface = ({ conversationId }: ChatInterfaceProps) => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-4xl space-y-4 p-4">
+        <div className="mx-auto max-w-4xl space-y-3 sm:space-y-4 p-3 sm:p-4">
           {safeMessages.length === 0 && !isLoading && (
-            <div className="flex h-full min-h-[400px] flex-col items-center justify-center text-center">
-              <div className="max-w-md">
-                <div className="mb-4 text-6xl">🤖</div>
-                <h2 className="mb-2 text-2xl font-semibold text-chatgpt-text">
+            <div className="flex h-full min-h-[300px] sm:min-h-[400px] flex-col items-center justify-center text-center">
+              <div className="max-w-md px-4">
+                <div className="mb-4 text-5xl sm:text-6xl">🤖</div>
+                <h2 className="mb-2 text-xl sm:text-2xl font-semibold text-chatgpt-text">
                   How can I help you today?
                 </h2>
-                <p className="text-gray-400">
+                <p className="text-sm sm:text-base text-gray-400">
                   Ask me anything! I'm here to help with coding, writing, research, and more.
                 </p>
               </div>
@@ -139,15 +139,15 @@ export const ChatInterface = ({ conversationId }: ChatInterfaceProps) => {
           
           {isSending && (
             <div className="flex justify-start">
-              <div className="flex max-w-[80%] gap-3">
-                <div className="h-8 w-8 rounded-full bg-gray-600 flex items-center justify-center">
-                  <div className="h-4 w-4 animate-pulse rounded-full bg-gray-400" />
+              <div className="flex max-w-[95%] sm:max-w-[80%] gap-2 sm:gap-3">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-600 flex items-center justify-center">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 animate-pulse rounded-full bg-gray-400" />
                 </div>
-                <div className="rounded-lg bg-chatgpt-ai-msg px-4 py-2">
+                <div className="rounded-lg bg-chatgpt-ai-msg px-3 py-2 sm:px-4 sm:py-2">
                   <div className="flex gap-1">
-                    <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '0ms' }} />
-                    <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '150ms' }} />
-                    <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '300ms' }} />
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '0ms' }} />
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '150ms' }} />
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               </div>
