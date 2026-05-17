@@ -14,7 +14,10 @@ import { ResetPasswordPage } from './features/auth/pages/ResetPasswordPage';
 // Dashboard Pages
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 
-// Landing Page (Coming Soon)
+// Chat Pages
+import { ChatPage } from './features/chat/pages/ChatPage';
+
+// Landing Page
 const LandingPage = () => {
   return (
     <div className="min-h-screen bg-chatgpt-dark flex items-center justify-center">
@@ -52,6 +55,8 @@ function App() {
           {/* Protected Routes (Require Authentication) */}
           <Route element={<PrivateRoute />}>
             <Route path={ROUTE_PATHS.DASHBOARD} element={<DashboardPage />} />
+            <Route path={ROUTE_PATHS.CHAT} element={<ChatPage />} />
+            <Route path={ROUTE_PATHS.CHAT_CONVERSATION} element={<ChatPage />} />
           </Route>
         </Routes>
       </Router>

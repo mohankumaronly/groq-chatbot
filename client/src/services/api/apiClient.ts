@@ -13,9 +13,9 @@ const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: API_TIMEOUT,
   headers: {
-    [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,  // Now correct: 'Content-Type': 'application/json'
+    [HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
   },
-  withCredentials: true, // Important for cookies (refresh token)
+  withCredentials: true,
 });
 
 // Request interceptor - Add access token to headers
@@ -25,37 +25,51 @@ apiClient.interceptors.request.use(
     if (token && config.headers) {
       config.headers[HEADERS.AUTHORIZATION] = `${HEADERS.BEARER} ${token}`;
     }
+    console.log(`📤 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    if (config.data) {
+      console.log('📤 Request Body:', config.data);
+    }
     return config;
   },
   (error: AxiosError) => {
+    console.error('📤 Request Error:', error.message);
     return Promise.reject(error);
   }
 );
 
 // Response interceptor - Handle token refresh on 401
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`📥 API Response: ${response.status} ${response.config.url}`);
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig;
+    
+    // Log detailed error
+    console.error('📥 API Error Details:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      url: error.config?.url,
+      method: error.config?.method,
+    });
     
     // Check if error is 401 and request hasn't been retried
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
       try {
-        // Attempt to refresh the token
+        console.log('🔄 Attempting to refresh token...');
         const newToken = await refreshAccessToken();
         
-        if (newToken) {
-          // Update authorization header
-          if (originalRequest.headers) {
-            originalRequest.headers[HEADERS.AUTHORIZATION] = `${HEADERS.BEARER} ${newToken}`;
-          }
-          // Retry the original request
+        if (newToken && originalRequest.headers) {
+          originalRequest.headers[HEADERS.AUTHORIZATION] = `${HEADERS.BEARER} ${newToken}`;
+          console.log('🔄 Retrying original request with new token');
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh failed - redirect to login
+        console.error('🔄 Token refresh failed:', refreshError);
         handleLogout();
         return Promise.reject(refreshError);
       }
@@ -69,7 +83,7 @@ apiClient.interceptors.response.use(
 const refreshAccessToken = async (): Promise<string | null> => {
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/auth/refresh`,
+      '/api/auth/refresh',
       {},
       { 
         withCredentials: true,
@@ -82,17 +96,19 @@ const refreshAccessToken = async (): Promise<string | null> => {
     const { accessToken } = response.data;
     if (accessToken) {
       tokenManager.setAccessToken(accessToken);
+      console.log('✅ Token refreshed successfully');
       return accessToken;
     }
     return null;
   } catch (error) {
-    console.error('Token refresh failed:', error);
+    console.error('❌ Token refresh failed:', error);
     return null;
   }
 };
 
 // Handle logout on token refresh failure
 const handleLogout = (): void => {
+  console.log('🚪 Logging out due to token refresh failure');
   tokenManager.clearAll();
   localStorage.removeItem(STORAGE_KEYS.USER);
   window.location.href = '/login';

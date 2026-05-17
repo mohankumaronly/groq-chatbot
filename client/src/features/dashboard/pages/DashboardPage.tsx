@@ -19,6 +19,13 @@ export const DashboardPage = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-chatgpt-text">Qroq AI Chatbot</h1>
           <div className="flex items-center gap-4">
+            <Button 
+              variant="primary" 
+              size="sm" 
+              onClick={() => navigate(ROUTES.CHAT)}
+            >
+              Start Chatting
+            </Button>
             <span className="text-gray-300">
               Welcome, {user?.firstName} {user?.lastName}
             </span>
@@ -39,6 +46,17 @@ export const DashboardPage = () => {
             <p className="text-gray-300 mb-6">
               Your account has been successfully authenticated.
             </p>
+            
+            {/* New Chat Button */}
+            <Button 
+              variant="primary" 
+              size="lg" 
+              onClick={() => navigate(ROUTES.CHAT)}
+              className="mb-6"
+            >
+              Start New Conversation
+            </Button>
+            
             <div className="bg-chatgpt-dark rounded-lg p-6 mb-6">
               <h3 className="text-lg font-semibold text-chatgpt-text mb-3">User Information</h3>
               <div className="text-left space-y-2 text-gray-300">
@@ -47,11 +65,6 @@ export const DashboardPage = () => {
                 <p><span className="font-medium">Email Verified:</span> {user?.emailVerified ? 'Yes' : 'No'}</p>
                 <p><span className="font-medium">Member Since:</span> {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</p>
               </div>
-            </div>
-            <div className="border-t border-gray-700 pt-6">
-              <p className="text-gray-400">
-                Chat interface coming soon! 🚀
-              </p>
             </div>
           </div>
         </div>

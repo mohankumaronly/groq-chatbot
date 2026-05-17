@@ -1,37 +1,48 @@
-// Base API URL
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+// Base API URL - Empty because Vite proxy handles routing
+export const API_BASE_URL = '';
 
 // API Timeout (30 seconds)
 export const API_TIMEOUT = 30000;
 
-// API Endpoints
+// API Endpoints - Full paths with /api prefix for proxy
 export const API_ENDPOINTS = {
   // Auth Endpoints
   AUTH: {
-    REGISTER: '/auth/register',
-    VERIFY_EMAIL: '/auth/verify-email',
-    LOGIN: '/auth/login',
-    VERIFY_OTP: '/auth/login/verify',
-    FORGOT_PASSWORD: '/auth/forgot-password',
-    RESET_PASSWORD: '/auth/reset-password',
-    REFRESH_TOKEN: '/auth/refresh',
-    LOGOUT: '/auth/logout',
-    GET_ME: '/auth/me',
+    REGISTER: '/api/auth/register',
+    VERIFY_EMAIL: '/api/auth/verify-email',
+    LOGIN: '/api/auth/login',
+    VERIFY_OTP: '/api/auth/login/verify',
+    FORGOT_PASSWORD: '/api/auth/forgot-password',
+    RESET_PASSWORD: '/api/auth/reset-password',
+    REFRESH_TOKEN: '/api/auth/refresh',
+    LOGOUT: '/api/auth/logout',
+    GET_ME: '/api/auth/me',
   },
   
-  // Chat Endpoints (for future use)
+  // Chat Endpoints
   CHAT: {
-    SEND: '/chat/send',
-    CONVERSATIONS: '/chat/conversations',
-    MESSAGES: '/chat/messages',
-    DELETE_CONVERSATION: '/chat/conversations/:id',
+    SEND: '/api/chat/send',
+    SEND_NEW: '/api/chat/send/new',
+    REGENERATE: '/api/chat/:id/regenerate',
   },
   
-  // User Endpoints (for future use)
+  // Conversation Endpoints
+  CONVERSATIONS: {
+    BASE: '/api/conversations',
+    ALL: '/api/conversations/all',
+    BY_ID: '/api/conversations/:id',
+    COUNT: '/api/conversations/count',
+    MESSAGES: '/api/conversations/:id/messages',
+    RECENT_MESSAGES: '/api/conversations/:id/messages/recent',
+    MESSAGE_COUNT: '/api/conversations/:id/messages/count',
+    DELETE_MESSAGE: '/api/conversations/:id/messages/:messageId',
+  },
+  
+  // User Endpoints
   USER: {
-    PROFILE: '/user/profile',
-    UPDATE_PROFILE: '/user/profile',
-    CHANGE_PASSWORD: '/user/change-password',
+    PROFILE: '/api/user/profile',
+    UPDATE_PROFILE: '/api/user/profile',
+    CHANGE_PASSWORD: '/api/user/change-password',
   },
 } as const;
 
@@ -47,14 +58,14 @@ export const HTTP_STATUS = {
   INTERNAL_SERVER_ERROR: 500,
 } as const;
 
-// Request Headers - Fixed: These are header NAMES, not values
+// Request Headers
 export const HEADERS = {
-  CONTENT_TYPE: 'Content-Type',      // Fixed: This should be 'Content-Type', not 'application/json'
+  CONTENT_TYPE: 'Content-Type',
   AUTHORIZATION: 'Authorization',
   BEARER: 'Bearer',
 } as const;
 
-// Content Types - Separate constant for values
+// Content Types
 export const CONTENT_TYPES = {
   JSON: 'application/json',
   FORM_DATA: 'multipart/form-data',

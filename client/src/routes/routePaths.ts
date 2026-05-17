@@ -12,7 +12,6 @@ export const ROUTE_PATHS = {
   PROFILE: '/profile',
   SETTINGS: '/settings',
   CHAT: '/chat',
-  
-  // Catch all
+  CHAT_CONVERSATION: '/chat/:conversationId',
   NOT_FOUND: '*',
 } as const;
